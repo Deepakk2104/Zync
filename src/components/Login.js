@@ -6,7 +6,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Google Login
+ 
   const signInWithGoogle = async () => {
     try {
       await signInWithPopup(auth, provider);
@@ -17,7 +17,7 @@ export default function Login() {
     }
   };
 
-  // Email/Password Login
+
   const loginWithEmail = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -27,7 +27,7 @@ export default function Login() {
     }
   };
 
-  // Email/Password Signup
+
   const signupWithEmail = async () => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
