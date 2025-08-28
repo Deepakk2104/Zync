@@ -1,10 +1,10 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-
+import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCXCwZH9Ro-9zETTYzPIJ2mJqB2Z7P6oh8Y",
+   apiKey: "AIzaSyCXCwZH9Ro-9zETTYzPIJ2mJqB2Z7P6oh8",
   authDomain: "zync-web.firebaseapp.com",
   projectId: "zync-web",
   storageBucket: "zync-web.firebasestorage.app",
@@ -19,3 +19,5 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 export const db = getFirestore(app);
+export { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword };
+
