@@ -4,12 +4,13 @@ import { getFirestore } from "firebase/firestore";
 import { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 
 const firebaseConfig = {
-   apiKey: "AIzaSyCXCwZH9Ro-9zETTYzPIJ2mJqB2Z7P6oh8",
-  authDomain: "zync-web.firebaseapp.com",
-  projectId: "zync-web",
-  storageBucket: "zync-web.firebasestorage.app",
-  messagingSenderId: "958939870606",
-  appId: "1:958939870606:web:50b48c35ef6cf48fe7a0df"
+  apiKey: "AIzaSyAiYyUNNhiKw3Ucj5LDRZ6UpsxpoQi0axc",
+  authDomain: "zync-e6279.firebaseapp.com",
+  projectId: "zync-e6279",
+  storageBucket: "zync-e6279.firebasestorage.app",
+  messagingSenderId: "845184455051",
+  appId: "1:845184455051:web:8405657647b91a391a9f8e",
+  measurementId: "G-7HJ8ELFHGN"
 };
 
 
