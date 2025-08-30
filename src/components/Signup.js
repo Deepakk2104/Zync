@@ -1,31 +1,38 @@
 import { useState } from "react";
-import { auth, provider } from "../firebase"; 
-import { signInWithPopup, signInWithEmailAndPassword} from "firebase/auth";
+import { auth, provider } from "../firebase";
+import { 
+  signInWithPopup, 
+  createUserWithEmailAndPassword 
+} from "firebase/auth";
 import { Link } from "react-router-dom";
 
-export default function Login() {
+export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const signInWithGoogle = async () => {
+  // signup with email
+  const signupWithEmail = async () => {
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      alert("Signup Successful ✅");
+      setEmail("");
+      setPassword("");
+    } catch (error) {
+      alert(error.message);
+      console.error(error.message);
+    }
+  };
+
+  // signup with Google
+  const signupWithGoogle = async () => {
     try {
       await signInWithPopup(auth, provider);
-      alert("Google Login Successful ✅");
+      alert("Google Signup Successful ✅");
     } catch (error) {
+      alert(error.message);
       console.error(error.message);
     }
   };
-
-  const loginWithEmail = async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("Email Login Successful ✅");
-    } catch (error) {
-      console.error(error.message);
-    }
-  };
-
-
 
   return (
     <div
@@ -37,7 +44,7 @@ export default function Login() {
         margin: "50px auto",
       }}
     >
-      <h2>Zync Login</h2>
+      <h2>Zync Signup</h2>
 
       <input
         name="email"
@@ -59,10 +66,11 @@ export default function Login() {
         onChange={(e) => setPassword(e.target.value)}
       />
 
-      <button onClick={loginWithEmail}>Login with Email</button>
-      <button onClick={signInWithGoogle}>Login with Google</button>
+      <button onClick={signupWithEmail}>Signup with Email</button>
+      <button onClick={signupWithGoogle}>Signup with Google</button>
+
       <p>
-        Don't have an account? <Link to="/signup">Signup</Link>
+        Already have an account? <Link to="/login">Login</Link>
       </p>
     </div>
   );
