@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { auth, provider } from "../firebase";
-import { 
-  signInWithPopup, 
-  createUserWithEmailAndPassword 
-} from "firebase/auth";
+import { signInWithPopup, createUserWithEmailAndPassword } from "firebase/auth";
 import { Link } from "react-router-dom";
 
 export default function Signup() {

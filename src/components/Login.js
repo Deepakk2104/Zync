@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { auth, provider } from "../firebase"; 
-import { signInWithPopup, signInWithEmailAndPassword} from "firebase/auth";
+import { auth, provider } from "../firebase";
+import { signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
 import { Link } from "react-router-dom";
 
 export default function Login() {
@@ -24,8 +24,6 @@ export default function Login() {
       console.error(error.message);
     }
   };
-
-
 
   return (
     <div
