@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { auth, provider } from "../firebase";
+import { auth, provider, upsertUserProfile } from "../firebase";
 import { signInWithPopup, createUserWithEmailAndPassword } from "firebase/auth";
 import { Link } from "react-router-dom";
 
@@ -9,26 +9,19 @@ export default function Signup() {
 
   // signup with email
   const signupWithEmail = async () => {
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      alert("Signup Successful ✅");
-      setEmail("");
-      setPassword("");
-    } catch (error) {
-      alert(error.message);
-      console.error(error.message);
-    }
+    const { user } = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    await upsertUserProfile(user);
+    alert("Signup Successful");
   };
 
-  // signup with Google
   const signupWithGoogle = async () => {
-    try {
-      await signInWithPopup(auth, provider);
-      alert("Google Signup Successful ✅");
-    } catch (error) {
-      alert(error.message);
-      console.error(error.message);
-    }
+    const { user } = await signInWithPopup(auth, provider);
+    await upsertUserProfile(user);
+    alert("Google Signup Successful");
   };
 
   return (

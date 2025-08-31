@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { auth, provider } from "../firebase";
+import { auth, provider, upsertUserProfile } from "../firebase";
 import { signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
 import { Link } from "react-router-dom";
 
@@ -7,22 +7,16 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const signInWithGoogle = async () => {
-    try {
-      await signInWithPopup(auth, provider);
-      alert("Google Login Successful ✅");
-    } catch (error) {
-      console.error(error.message);
-    }
+  const loginWithEmail = async () => {
+    const { user } = await signInWithEmailAndPassword(auth, email, password);
+    await upsertUserProfile(user);
+    alert("Email Login Successful");
   };
 
-  const loginWithEmail = async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      alert("Email Login Successful ✅");
-    } catch (error) {
-      console.error(error.message);
-    }
+  const signInWithGoogle = async () => {
+    const { user } = await signInWithPopup(auth, provider);
+    await upsertUserProfile(user);
+    alert("Google Login Successful");
   };
 
   return (

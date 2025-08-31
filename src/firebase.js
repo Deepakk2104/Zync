@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import {
   signInWithPopup,
   signInWithEmailAndPassword,
@@ -22,8 +22,23 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 export const db = getFirestore(app);
+
+async function upsertUserProfile(user) {
+  if (!user) return;
+  const ref = doc(db, "users", user.uid);
+  const payload = {
+    uid: user.uid,
+    name: user.displayName || "",
+    email: user.email || "",
+    photoURL: user.photoURL || "",
+    lastSeen: serverTimestamp(),
+  };
+  await setDoc(ref, payload, { merge: true });
+}
+
 export {
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  upsertUserProfile,
 };
