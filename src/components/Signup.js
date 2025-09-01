@@ -7,7 +7,6 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // signup with email
   const signupWithEmail = async () => {
     const { user } = await createUserWithEmailAndPassword(
       auth,
