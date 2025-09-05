@@ -1,6 +1,14 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  serverTimestamp,
+  collection,
+  addDoc,
+  onDisconnect,
+} from "firebase/firestore";
 import {
   signInWithPopup,
   signInWithEmailAndPassword,
@@ -23,6 +31,21 @@ export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 
+export function setUserOnlineStatus(userId, isOnline) {
+  const ref = doc(db, "users", userId);
+  if (isOnline) {
+    setDoc(ref, { online: true, lastSeen: serverTimestamp() }, { merge: true });
+    // When user disconnects, set offline
+    onDisconnect(ref).set({ online: false, lastSeen: serverTimestamp() });
+  } else {
+    setDoc(
+      ref,
+      { online: false, lastSeen: serverTimestamp() },
+      { merge: true }
+    );
+  }
+}
+
 async function upsertUserProfile(user) {
   if (!user) return;
   const ref = doc(db, "users", user.uid);
@@ -32,8 +55,18 @@ async function upsertUserProfile(user) {
     email: user.email || "",
     photoURL: user.photoURL || "",
     lastSeen: serverTimestamp(),
+    online: true, // track online status
   };
   await setDoc(ref, payload, { merge: true });
+}
+
+async function createGroup(name, members) {
+  const groupRef = await addDoc(collection(db, "groups"), {
+    name,
+    members, // array of uids
+    createdAt: serverTimestamp(),
+  });
+  return groupRef.id;
 }
 
 export {
@@ -41,4 +74,5 @@ export {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   upsertUserProfile,
+  createGroup,
 };
