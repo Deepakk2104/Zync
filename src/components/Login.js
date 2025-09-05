@@ -18,7 +18,6 @@ export default function Login() {
     await upsertUserProfile(user);
     alert("Google Login Successful");
   };
-
   return (
     <div
       style={{
