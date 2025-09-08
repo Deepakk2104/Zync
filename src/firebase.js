@@ -7,7 +7,6 @@ import {
   serverTimestamp,
   collection,
   addDoc,
-  onDisconnect,
 } from "firebase/firestore";
 import {
   signInWithPopup,
@@ -31,19 +30,17 @@ export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 
-export function setUserOnlineStatus(userId, isOnline) {
+export async function setUserOnlineStatus(userId, isOnline) {
   const ref = doc(db, "users", userId);
-  if (isOnline) {
-    setDoc(ref, { online: true, lastSeen: serverTimestamp() }, { merge: true });
-    // When user disconnects, set offline
-    onDisconnect(ref).set({ online: false, lastSeen: serverTimestamp() });
-  } else {
-    setDoc(
-      ref,
-      { online: false, lastSeen: serverTimestamp() },
-      { merge: true }
-    );
-  }
+
+  await setDoc(
+    ref,
+    {
+      online: isOnline,
+      lastSeen: serverTimestamp(),
+    },
+    { merge: true }
+  );
 }
 
 async function upsertUserProfile(user) {
