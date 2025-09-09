@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useEffect } from "react";
 import Sidebar from "./Sidebar";
 import ChatWindow from "./ChatWindow";
-import GroupChat from "./GroupChat";
+import GroupChat from "./Groupchat";
 import { auth, setUserOnlineStatus } from "../firebase";
 
 export default function Dashboard() {
