@@ -11,7 +11,7 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import EmojiPicker from "emoji-picker-react"; // npm install emoji-picker-react
+import EmojiPicker from "emoji-picker-react";
 
 export default function ChatWindow({ chatId }) {
   const [messages, setMessages] = useState([]);
