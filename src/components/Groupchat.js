@@ -24,7 +24,6 @@ export default function GroupChat({ groupId }) {
     ? doc(db, "groups", groupId, "typing", "status")
     : null;
 
-  // 🔹 Load group info
   useEffect(() => {
     if (!groupId) return;
     const groupRef = doc(db, "groups", groupId);
