@@ -1,23 +1,35 @@
 import { useState } from "react";
 import { auth, provider, upsertUserProfile } from "../firebase";
 import { signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const loginWithEmail = async () => {
-    const { user } = await signInWithEmailAndPassword(auth, email, password);
-    await upsertUserProfile(user);
-    alert("Email Login Successful");
+    try {
+      const { user } = await signInWithEmailAndPassword(auth, email, password);
+      await upsertUserProfile(user);
+      alert("Email Login Successful");
+      navigate("/dashboard");
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const signInWithGoogle = async () => {
-    const { user } = await signInWithPopup(auth, provider);
-    await upsertUserProfile(user);
-    alert("Google Login Successful");
+    try {
+      const { user } = await signInWithPopup(auth, provider);
+      await upsertUserProfile(user);
+      alert("Google Login Successful");
+      navigate("/dashboard");
+    } catch (error) {
+      alert(error.message);
+    }
   };
+
   return (
     <div
       style={{
@@ -53,7 +65,7 @@ export default function Login() {
       <button onClick={loginWithEmail}>Login with Email</button>
       <button onClick={signInWithGoogle}>Login with Google</button>
       <p>
-        Don't have an account? <Link to="/signup">Signup</Link>
+        Don&apos;t have an account? <Link to="/signup">Signup</Link>
       </p>
     </div>
   );

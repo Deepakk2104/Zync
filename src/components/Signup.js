@@ -1,26 +1,37 @@
 import { useState } from "react";
 import { auth, provider, upsertUserProfile } from "../firebase";
 import { signInWithPopup, createUserWithEmailAndPassword } from "firebase/auth";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const signupWithEmail = async () => {
-    const { user } = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    await upsertUserProfile(user);
-    alert("Signup Successful");
+    try {
+      const { user } = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      await upsertUserProfile(user);
+      alert("Signup Successful");
+      navigate("/dashboard");
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const signupWithGoogle = async () => {
-    const { user } = await signInWithPopup(auth, provider);
-    await upsertUserProfile(user);
-    alert("Google Signup Successful");
+    try {
+      const { user } = await signInWithPopup(auth, provider);
+      await upsertUserProfile(user);
+      alert("Google Signup Successful");
+      navigate("/dashboard");
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   return (
