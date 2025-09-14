@@ -47,7 +47,7 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Chat Content */}
+        {/* Chat Content here */}
         <div className="flex-1">
           {selectedChat ? (
             isGroup ? (
