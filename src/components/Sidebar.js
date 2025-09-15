@@ -9,7 +9,7 @@ export default function Sidebar({ setSelectedChat, setIsGroup }) {
   useEffect(() => {
     if (!auth.currentUser) return;
 
-    // Listen for all users except current
+    // Listen for all users except current user
     const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
       setUsers(
         snap.docs
