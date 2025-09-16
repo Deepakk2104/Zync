@@ -198,7 +198,7 @@ export default function ChatWindow({ chatId }) {
         })}
       </div>
 
-      {/* Typing indicator */}
+      {/* Typing indicator  */}
       {peerTyping && (
         <div className="text-gray-400 text-sm mb-1">Typing...</div>
       )}
