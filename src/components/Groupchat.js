@@ -20,9 +20,6 @@ export default function GroupChat({ groupId }) {
   const [groupInfo, setGroupInfo] = useState(null);
   const [showSidebar, setShowSidebar] = useState(false);
 
-  const currentUser = auth.currentUser;
-  if (!currentUser) return null; // 🚀 Prevent crash after logout
-
   const typingRef = groupId
     ? doc(db, "groups", groupId, "typing", "status")
     : null;
@@ -47,7 +44,7 @@ export default function GroupChat({ groupId }) {
 
   // 🔹 Listen for group messages
   useEffect(() => {
-    if (!groupId || !currentUser) return;
+    if (!groupId) return;
     const q = query(
       collection(db, "groups", groupId, "messages"),
       orderBy("timestamp", "asc")
@@ -58,19 +55,19 @@ export default function GroupChat({ groupId }) {
 
       // Mark messages as seen
       msgs.forEach(async (msg) => {
-        if (msg.senderId !== currentUser.uid) {
+        if (msg.senderId !== auth.currentUser.uid) {
           const msgRef = doc(db, "groups", groupId, "messages", msg.id);
           await updateDoc(msgRef, {
             seenBy: {
               ...(msg.seenBy || {}),
-              [currentUser.uid]: true,
+              [auth.currentUser.uid]: true,
             },
           });
         }
       });
     });
     return () => unsub();
-  }, [groupId, currentUser]);
+  }, [groupId]);
 
   // 🔹 Load all users
   useEffect(() => {
@@ -85,26 +82,30 @@ export default function GroupChat({ groupId }) {
   // 🔹 Handle typing
   const handleInputChange = async (e) => {
     setNewMsg(e.target.value);
-    if (!typingRef || !currentUser) return;
+    if (!typingRef || !auth.currentUser) return;
     await setDoc(
       typingRef,
-      { [currentUser.uid]: e.target.value.length > 0 },
+      { [auth.currentUser.uid]: e.target.value.length > 0 },
       { merge: true }
     );
   };
 
   // 🔹 Send message
   const sendMessage = async () => {
-    if (!newMsg.trim() || !groupId || !currentUser) return;
+    if (!newMsg.trim() || !groupId || !auth.currentUser) return;
     await addDoc(collection(db, "groups", groupId, "messages"), {
       text: newMsg,
-      senderId: currentUser.uid,
+      senderId: auth.currentUser.uid,
       timestamp: serverTimestamp(),
-      seenBy: { [currentUser.uid]: true },
+      seenBy: { [auth.currentUser.uid]: true },
     });
     setNewMsg("");
     if (typingRef) {
-      await setDoc(typingRef, { [currentUser.uid]: false }, { merge: true });
+      await setDoc(
+        typingRef,
+        { [auth.currentUser.uid]: false },
+        { merge: true }
+      );
     }
   };
 
@@ -127,7 +128,7 @@ export default function GroupChat({ groupId }) {
       <div className="flex-1 overflow-y-auto p-4">
         {messages.map((msg) => {
           const user = users[msg.senderId] || {};
-          const isOwn = msg.senderId === currentUser.uid;
+          const isOwn = msg.senderId === auth.currentUser?.uid;
           const seenCount = msg.seenBy ? Object.keys(msg.seenBy).length : 0;
 
           return (
@@ -162,7 +163,7 @@ export default function GroupChat({ groupId }) {
       {/* 🔹 Typing indicator */}
       <div className="text-gray-400 text-sm mb-1 px-4">
         {Object.entries(peerTyping || {})
-          .filter(([uid, val]) => val && uid !== currentUser.uid)
+          .filter(([uid, val]) => val && uid !== auth.currentUser?.uid)
           .map(([uid]) => (
             <div key={uid}>
               {users[uid]?.name || users[uid]?.email || uid} is typing...

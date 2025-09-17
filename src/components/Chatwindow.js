@@ -21,23 +21,17 @@ export default function ChatWindow({ chatId }) {
   const [lastSeen, setLastSeen] = useState(null);
   const [isOnline, setIsOnline] = useState(false);
 
-  if (!auth.currentUser) return null; // 🔹 Prevent crash when user logs out
-
   const chatDocId = [auth.currentUser.uid, chatId].sort().join("_");
   const typingRef = doc(db, "chats", chatDocId, "typing", "status");
 
   // Manage own online/offline status
   useEffect(() => {
-    if (!auth.currentUser) return;
     setUserOnlineStatus(auth.currentUser.uid, true);
-    return () => {
-      if (auth.currentUser) setUserOnlineStatus(auth.currentUser.uid, false);
-    };
+    return () => setUserOnlineStatus(auth.currentUser.uid, false);
   }, []);
 
   // Listen for messages
   useEffect(() => {
-    if (!chatId || !auth.currentUser) return;
     const q = query(
       collection(db, "chats", chatDocId, "messages"),
       orderBy("timestamp", "asc")
@@ -59,7 +53,6 @@ export default function ChatWindow({ chatId }) {
 
   // Listen for typing status
   useEffect(() => {
-    if (!chatId) return;
     const unsub = onSnapshot(typingRef, (snap) => {
       if (snap.exists()) {
         const typingData = snap.data();
@@ -69,9 +62,8 @@ export default function ChatWindow({ chatId }) {
     return () => unsub();
   }, [chatId, typingRef]);
 
-  // Listen for peer status
+  // Listen for peer status (online + last seen)
   useEffect(() => {
-    if (!chatId) return;
     const peerRef = doc(db, "users", chatId);
     const unsub = onSnapshot(peerRef, (snap) => {
       if (snap.exists()) {
@@ -88,7 +80,6 @@ export default function ChatWindow({ chatId }) {
     const value = e.target.value;
     setNewMsg(value);
 
-    if (!auth.currentUser) return;
     await setDoc(
       typingRef,
       { [auth.currentUser.uid]: value.length > 0 },
@@ -103,33 +94,67 @@ export default function ChatWindow({ chatId }) {
 
   // Send message
   const sendMessage = async () => {
-    if (!newMsg.trim() || !auth.currentUser) return;
+    if (!newMsg.trim()) return;
 
     await addDoc(collection(db, "chats", chatDocId, "messages"), {
       text: newMsg,
       senderId: auth.currentUser.uid,
       timestamp: serverTimestamp(),
-      seen: false,
+      seen: false, // by default
     });
 
     setNewMsg("");
     await setDoc(typingRef, { [auth.currentUser.uid]: false }, { merge: true });
   };
 
+  // Format last seen like WhatsApp
+  const formatLastSeen = (date) => {
+    if (!date) return "recently";
+
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+
+    const yesterday = new Date();
+    yesterday.setDate(now.getDate() - 1);
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+
+    if (isToday) {
+      return `Today at ${date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
+    } else if (isYesterday) {
+      return `Yesterday at ${date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
+    } else {
+      return `${date.toLocaleDateString([], {
+        day: "numeric",
+        month: "short",
+      })} at ${date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
+    }
+  };
+
+  // Get read receipt status
+  const getReadReceipt = (msg) => {
+    if (msg.senderId !== auth.currentUser.uid) return null;
+
+    if (!msg.seen) {
+      return "✓"; // single tick
+    } else {
+      return "✓✓"; // double tick
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col p-4">
-      {/* Header */}
+      {/* Header with online/last seen */}
       <div className="mb-2 text-sm text-gray-400">
-        {isOnline
-          ? "Online"
-          : `Last seen: ${
-              lastSeen
-                ? lastSeen.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : "recently"
-            }`}
+        {isOnline ? "Online" : `Last seen: ${formatLastSeen(lastSeen)}`}
       </div>
 
       {/* Messages */}
@@ -141,6 +166,8 @@ export default function ChatWindow({ chatId }) {
                 minute: "2-digit",
               })
             : "";
+
+          const receipt = getReadReceipt(msg);
 
           return (
             <div
@@ -154,14 +181,14 @@ export default function ChatWindow({ chatId }) {
               <div className="inline-block px-2 py-1 rounded bg-gray-700 text-white relative">
                 {msg.text}
                 <div className="text-xs text-gray-300 mt-1 flex items-center justify-end gap-1">
-                  {msgTime}
-                  {msg.senderId === auth.currentUser.uid && (
+                  {msgTime}{" "}
+                  {receipt && (
                     <span
                       className={
                         msg.seen ? "text-blue-400 font-bold" : "text-gray-400"
                       }
                     >
-                      {msg.seen ? "✓✓" : "✓"}
+                      {receipt}
                     </span>
                   )}
                 </div>
@@ -171,12 +198,12 @@ export default function ChatWindow({ chatId }) {
         })}
       </div>
 
-      {/* Typing indicator */}
+      {/* Typing indicator  */}
       {peerTyping && (
         <div className="text-gray-400 text-sm mb-1">Typing...</div>
       )}
 
-      {/* Input */}
+      {/* Input + Emoji Picker */}
       <div className="flex items-center gap-2 relative">
         <button
           className="p-2 bg-gray-200 rounded"
@@ -184,11 +211,13 @@ export default function ChatWindow({ chatId }) {
         >
           😊
         </button>
+
         {showEmojiPicker && (
           <div className="absolute bottom-12 left-0 z-50">
             <EmojiPicker onEmojiClick={handleEmojiClick} />
           </div>
         )}
+
         <input
           className="flex-1 p-2 border rounded"
           value={newMsg}
