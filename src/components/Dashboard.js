@@ -14,16 +14,23 @@ export default function Dashboard() {
   useEffect(() => {
     if (!auth.currentUser) return;
 
-    // Mark user online on mount
-    setUserOnlineStatus(auth.currentUser.uid, true);
+    const uid = auth.currentUser.uid;
+
+    // Mark user online
+    setUserOnlineStatus(uid, true);
 
     // Mark user offline on unmount
-    return () => setUserOnlineStatus(auth.currentUser.uid, false);
+    return () => {
+      if (auth.currentUser) {
+        setUserOnlineStatus(auth.currentUser.uid, false);
+      }
+    };
   }, []);
 
   const handleLogout = async () => {
-    if (auth.currentUser) {
-      await setUserOnlineStatus(auth.currentUser.uid, false);
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      await setUserOnlineStatus(currentUser.uid, false);
     }
     await signOut(auth);
     navigate("/login");
@@ -47,7 +54,7 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Chat Content here */}
+        {/* Chat Content */}
         <div className="flex-1">
           {selectedChat ? (
             isGroup ? (
