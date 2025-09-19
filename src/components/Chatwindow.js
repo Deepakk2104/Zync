@@ -24,7 +24,7 @@ export default function ChatWindow({ chatId }) {
   const chatDocId = [auth.currentUser.uid, chatId].sort().join("_");
   const typingRef = doc(db, "chats", chatDocId, "typing", "status");
 
-  // Manage own online/offline status
+  // Manage own online/offline status of user
   useEffect(() => {
     setUserOnlineStatus(auth.currentUser.uid, true);
     return () => setUserOnlineStatus(auth.currentUser.uid, false);
