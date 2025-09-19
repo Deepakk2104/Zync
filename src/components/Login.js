@@ -63,7 +63,7 @@ export default function Login() {
       />
 
       <button onClick={loginWithEmail}>Login with Email</button>
-      <button onClick={signInWithGoogle}>Login with Googl</button>
+      <button onClick={signInWithGoogle}>Login with Google</button>
       <p>
         Don&apos;t have an account? <Link to="/signup">Signup</Link>
       </p>
