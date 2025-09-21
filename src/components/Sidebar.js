@@ -58,7 +58,7 @@ export default function Sidebar({ setSelectedChat, setIsGroup }) {
                       minute: "2-digit",
                     })
                   : "N/A"}
-              </span>
+              </spa>
             )}
           </div>
         </div>
