@@ -22,7 +22,7 @@ function ProtectedRoute({ children }) {
 
 function App() {
   return (
-    <Route>
+    <Router>
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<Login />} />
