@@ -16,7 +16,7 @@ export default function Dashboard() {
 
     const uid = auth.currentUser.uid;
 
-    // Mark user online
+    // Mark user online here
     setUserOnlineStatus(uid, true);
 
     // Mark user offline on unmount
