@@ -18,7 +18,7 @@ export default function Sidebar({ setSelectedChat, setIsGroup }) {
       );
     });
 
-    // Listen for groups
+    // Listen for groups here
     const unsubGroups = onSnapshot(collection(db, "groups"), (snap) => {
       setGroups(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     });
