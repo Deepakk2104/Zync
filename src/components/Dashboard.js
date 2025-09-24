@@ -9,32 +9,46 @@ import { useNavigate } from "react-router-dom";
 export default function Dashboard() {
   const [selectedChat, setSelectedChat] = useState(null);
   const [isGroup, setIsGroup] = useState(false);
+  const [currentUser, setCurrentUser] = useState(auth.currentUser);
   const navigate = useNavigate();
 
+  // Update currentUser if auth state changes
   useEffect(() => {
-    if (!auth.currentUser) return;
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+      if (!user) navigate("/login"); // Redirect if logged out
+    });
+    return () => unsubscribe();
+  }, [navigate]);
 
-    const uid = auth.currentUser.uid;
+  // Online status effect
+  useEffect(() => {
+    if (!currentUser) return;
 
-    // Mark user online here
+    const uid = currentUser.uid;
     setUserOnlineStatus(uid, true);
 
-    // Mark user offline on unmount
     return () => {
+      // Check if still logged in before marking offline
       if (auth.currentUser) {
         setUserOnlineStatus(auth.currentUser.uid, false);
       }
     };
-  }, []);
+  }, [currentUser]);
 
   const handleLogout = async () => {
-    const currentUser = auth.currentUser;
     if (currentUser) {
       await setUserOnlineStatus(currentUser.uid, false);
     }
     await signOut(auth);
+    setSelectedChat(null);
+    setIsGroup(false);
     navigate("/login");
   };
+
+  if (!currentUser) {
+    return null; // Prevent rendering before auth is ready
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">
