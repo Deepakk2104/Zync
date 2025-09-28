@@ -6,7 +6,7 @@ export default function Sidebar({ setSelectedChat, setIsGroup }) {
   const [users, setUsers] = useState([]);
   const [groups, setGroups] = useState([]);
 
-  useEffect(() => {
+  useEffec(() => {
     if (!auth.currentUser) return;
 
     // Listen for all users except current user in this
