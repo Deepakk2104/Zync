@@ -1,4 +1,4 @@
-impor React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import ChatWindow from "./Chatwindow";
 import GroupChat from "./Groupchat";
