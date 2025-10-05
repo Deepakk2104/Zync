@@ -1,4 +1,4 @@
-impot {
+import {
   BrowserRouter as Router,
   Routes,
   Route,
