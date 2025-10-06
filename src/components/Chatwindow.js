@@ -144,7 +144,7 @@ export default function ChatWindow({ chatId }) {
     if (msg.senderId !== auth.currentUser.uid) return null;
 
     if (!msg.seen) {
-      return "✓"; // single tick
+      return "✓"; // single
     } else {
       return "✓✓"; // double tick
     }
