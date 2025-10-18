@@ -24,6 +24,7 @@ export default function GroupChat({ groupId }) {
     ? doc(db, "groups", groupId, "typing", "status")
     : null;
 
+  // Load group info
   useEffect(() => {
     if (!groupId) return;
     const groupRef = doc(db, "groups", groupId);
@@ -33,7 +34,7 @@ export default function GroupChat({ groupId }) {
     return () => unsub();
   }, [groupId]);
 
-  // 🔹 Listen for typing updates
+  // Listen for typing updates
   useEffect(() => {
     if (!typingRef) return;
     const unsub = onSnapshot(typingRef, (snap) => {
@@ -42,13 +43,15 @@ export default function GroupChat({ groupId }) {
     return () => unsub();
   }, [typingRef]);
 
-  // 🔹 Listen for group messages
+  // Listen for group messages
   useEffect(() => {
-    if (!groupId) return;
+    if (!groupId || !groupInfo?.members.includes(auth.currentUser.uid)) return;
+
     const q = query(
       collection(db, "groups", groupId, "messages"),
       orderBy("timestamp", "asc")
     );
+
     const unsub = onSnapshot(q, async (snap) => {
       const msgs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       setMessages(msgs);
@@ -66,10 +69,11 @@ export default function GroupChat({ groupId }) {
         }
       });
     });
-    return () => unsub();
-  }, [groupId]);
 
-  // 🔹 Load all users
+    return () => unsub();
+  }, [groupId, groupInfo]);
+
+  // Load all users
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "users"), (snap) => {
       const data = {};
@@ -79,7 +83,7 @@ export default function GroupChat({ groupId }) {
     return () => unsub();
   }, []);
 
-  // 🔹 Handle typing
+  // Handle typing
   const handleInputChange = async (e) => {
     setNewMsg(e.target.value);
     if (!typingRef || !auth.currentUser) return;
@@ -90,9 +94,16 @@ export default function GroupChat({ groupId }) {
     );
   };
 
-  // 🔹 Send message
+  // Send message
   const sendMessage = async () => {
-    if (!newMsg.trim() || !groupId || !auth.currentUser) return;
+    if (
+      !newMsg.trim() ||
+      !groupId ||
+      !auth.currentUser ||
+      !groupInfo?.members.includes(auth.currentUser.uid)
+    )
+      return;
+
     await addDoc(collection(db, "groups", groupId, "messages"), {
       text: newMsg,
       senderId: auth.currentUser.uid,
@@ -100,6 +111,7 @@ export default function GroupChat({ groupId }) {
       seenBy: { [auth.currentUser.uid]: true },
     });
     setNewMsg("");
+
     if (typingRef) {
       await setDoc(
         typingRef,
@@ -109,9 +121,11 @@ export default function GroupChat({ groupId }) {
     }
   };
 
+  const isMember = groupInfo?.members.includes(auth.currentUser.uid);
+
   return (
     <div className="flex-1 flex flex-col relative">
-      {/* 🔹 Group Header */}
+      {/* Group Header */}
       {groupInfo && (
         <div
           className="p-4 bg-gray-800 text-white border-b cursor-pointer"
@@ -124,72 +138,88 @@ export default function GroupChat({ groupId }) {
         </div>
       )}
 
-      {/* 🔹 Messages */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4">
-        {messages.map((msg) => {
-          const user = users[msg.senderId] || {};
-          const isOwn = msg.senderId === auth.currentUser?.uid;
-          const seenCount = msg.seenBy ? Object.keys(msg.seenBy).length : 0;
+        {isMember ? (
+          messages.map((msg) => {
+            const user = users[msg.senderId] || {};
+            const isOwn = msg.senderId === auth.currentUser?.uid;
+            const seenCount = msg.seenBy ? Object.keys(msg.seenBy).length : 0;
 
-          return (
-            <div
-              key={msg.id}
-              className={`mb-2 flex ${isOwn ? "justify-end" : "justify-start"}`}
-            >
-              <div className="max-w-xs">
-                {!isOwn && (
-                  <div className="text-xs text-gray-400 mb-1">
-                    {user.name || user.email || msg.senderId}
+            return (
+              <div
+                key={msg.id}
+                className={`mb-2 flex ${
+                  isOwn ? "justify-end" : "justify-start"
+                }`}
+              >
+                <div className="max-w-xs">
+                  {!isOwn && (
+                    <div className="text-xs text-gray-400 mb-1">
+                      {user.name || user.email || msg.senderId}
+                    </div>
+                  )}
+                  <div
+                    className={`inline-block px-3 py-2 rounded-lg ${
+                      isOwn
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-700 text-white"
+                    }`}
+                  >
+                    {msg.text}
                   </div>
-                )}
-                <div
-                  className={`inline-block px-3 py-2 rounded-lg ${
-                    isOwn ? "bg-blue-600 text-white" : "bg-gray-700 text-white"
-                  }`}
-                >
-                  {msg.text}
+                  {isOwn && (
+                    <div className="text-xs text-gray-400 mt-1 text-right">
+                      {seenCount > 1 ? `Seen by ${seenCount - 1}` : "Sent"}
+                    </div>
+                  )}
                 </div>
-                {isOwn && (
-                  <div className="text-xs text-gray-400 mt-1 text-right">
-                    {seenCount > 1 ? `Seen by ${seenCount - 1}` : "Sent"}
-                  </div>
-                )}
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        ) : (
+          <div className="text-center text-gray-400 mt-4">
+            You are not a member of this group
+          </div>
+        )}
       </div>
 
-      {/* 🔹 Typing indicator */}
-      <div className="text-gray-400 text-sm mb-1 px-4">
-        {Object.entries(peerTyping || {})
-          .filter(([uid, val]) => val && uid !== auth.currentUser?.uid)
-          .map(([uid]) => (
-            <div key={uid}>
-              {users[uid]?.name || users[uid]?.email || uid} is typing...
-            </div>
-          ))}
-      </div>
+      {/* Typing indicator */}
+      {isMember && (
+        <div className="text-gray-400 text-sm mb-1 px-4">
+          {Object.entries(peerTyping || {})
+            .filter(([uid, val]) => val && uid !== auth.currentUser?.uid)
+            .map(([uid]) => (
+              <div key={uid}>
+                {users[uid]?.name || users[uid]?.email || uid} is typing...
+              </div>
+            ))}
+        </div>
+      )}
 
-      {/* 🔹 Input */}
+      {/* Input */}
       <div className="flex gap-2 p-4 border-t">
         <input
           className="flex-1 p-2 border rounded"
           value={newMsg}
           onChange={handleInputChange}
-          placeholder="Type a message..."
-          disabled={!groupId}
+          placeholder={
+            isMember
+              ? "Type a message..."
+              : "You cannot send messages in this group"
+          }
+          disabled={!isMember}
         />
         <button
           className="p-2 bg-green-500 rounded text-white"
           onClick={sendMessage}
-          disabled={!groupId}
+          disabled={!isMember}
         >
           Send
         </button>
       </div>
 
-      {/* 🔹 Group Info Sidebar */}
+      {/* Group Info Sidebar */}
       {showSidebar && (
         <div className="absolute right-0 top-0 h-full w-64 bg-gray-900 text-white shadow-lg p-4 overflow-y-auto">
           <button
