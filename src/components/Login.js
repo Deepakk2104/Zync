@@ -7,6 +7,113 @@ import {
 } from "firebase/auth";
 import { Link, useNavigate } from "react-router-dom";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+import { FcGoogle } from "react-icons/fc";
+
+const styles = {
+  pageContainer: {
+    display: "flex",
+    minHeight: "100vh",
+    alignItems: "stretch",
+  },
+  leftPanel: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    padding: "60px 80px",
+    color: "white",
+    background:
+      "linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #d946ef 100%)",
+    position: "relative",
+    overflow: "hidden",
+  },
+  chatBubble: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    width: "400px",
+    height: "400px",
+    borderRadius: "50%",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    zIndex: 0,
+    clipPath:
+      "polygon(0% 0%, 100% 0%, 100% 100%, 75% 100%, 50% 85%, 25% 100%, 0% 100%)",
+    transform: "translate(-50%, -50%) rotate(45deg) scale(1.2)",
+    opacity: 0.3,
+  },
+  rightPanel: {
+    flex: 1,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    padding: "40px 20px",
+  },
+  loginCard: {
+    width: "100%",
+    maxWidth: "400px",
+    padding: "40px",
+    backgroundColor: "#ffffff",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+    borderRadius: "12px",
+  },
+  input: {
+    width: "100%",
+    padding: "12px 15px",
+    borderRadius: "8px",
+    border: "1px solid #e5e7eb",
+    backgroundColor: "#f9fafb",
+    fontSize: "16px",
+    color: "#4b5563",
+    marginBottom: "16px",
+    boxSizing: "border-box",
+  },
+  primaryButton: {
+    width: "100%",
+    padding: "12px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "#1f2937",
+    color: "white",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "background-color 0.2s",
+    marginBottom: "16px",
+  },
+  googleButton: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #e5e7eb",
+    backgroundColor: "white",
+    color: "#374151",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "border-color 0.2s",
+  },
+  linkText: {
+    color: "#a855f7",
+    fontSize: "14px",
+    textDecoration: "none",
+    fontWeight: "600",
+  },
+  passwordToggle: {
+    position: "absolute",
+    right: "15px",
+    top: "50%",
+    transform: "translateY(-50%)",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    color: "#9ca3af",
+    fontSize: "20px",
+  },
+};
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -16,7 +123,6 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Redirect if user is already logged in
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) navigate("/dashboard");
@@ -37,7 +143,13 @@ export default function Login() {
       await upsertUserProfile(user);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message);
+      const msg = err?.message
+        ? err.message
+            .replace("Firebase: Error (auth/", "")
+            .replace(").", "")
+            .replace(/-/g, " ")
+        : "Something went wrong";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -51,109 +163,227 @@ export default function Login() {
       await upsertUserProfile(user);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message);
+      const msg = err?.message
+        ? err.message
+            .replace("Firebase: Error (auth/", "")
+            .replace(").", "")
+            .replace(/-/g, " ")
+        : "Something went wrong";
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
+  const getButtonStyles = (baseStyle) => ({
+    ...baseStyle,
+    opacity: loading ? 0.6 : 1,
+    cursor: loading ? "not-allowed" : "pointer",
+  });
+
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-        maxWidth: "350px",
-        margin: "50px auto",
-        padding: "30px",
-        border: "1px solid #ccc",
-        borderRadius: "10px",
-        boxShadow: "0 3px 12px rgba(0,0,0,0.1)",
-        textAlign: "center",
-        backgroundColor: "#f9f9f9",
-      }}
-    >
-      <h2 style={{ marginBottom: "20px" }}>Zyncc</h2>
+    <div style={styles.pageContainer}>
+      <div style={styles.leftPanel}>
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginBottom: "20px",
+            }}
+          >
+            <div
+              style={{
+                width: "30px",
+                height: "30px",
+                borderRadius: "50%",
+                background: "white",
+                marginRight: "10px",
+              }}
+            />
+            <h1 style={{ fontSize: "24px", fontWeight: "700" }}>zyncc</h1>
+          </div>
+          <p
+            style={{
+              fontSize: "32px",
+              fontWeight: "600",
+              lineHeight: "1.2",
+              margin: "20px 0",
+            }}
+          >
+            Connect, chat, and collaborate with your team in real-time
+          </p>
+        </div>
 
-      <input
-        type="email"
-        placeholder="Enter Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        style={{
-          padding: "10px",
-          borderRadius: "5px",
-          border: "1px solid #ccc",
-        }}
-      />
+        <div style={styles.chatBubble}></div>
 
-      <div style={{ position: "relative" }}>
-        <input
-          type={showPassword ? "text" : "password"}
-          placeholder="Enter Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+        <p
           style={{
-            padding: "10px",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-            width: 327,
-          }}
-        />
-        <button
-          type="button"
-          onClick={() => setShowPassword((prev) => !prev)}
-          style={{
-            position: "absolute",
-            right: "10px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "#555",
-            fontSize: "20px",
+            fontSize: "16px",
+            fontWeight: "500",
+            position: "relative",
+            zIndex: 1,
           }}
         >
-          {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
-        </button>
+          Your conversations, simplified.
+        </p>
       </div>
 
-      {error && <p style={{ color: "red", fontSize: "14px" }}>{error}</p>}
+      <div style={styles.rightPanel}>
+        <div style={styles.loginCard}>
+          <h2
+            style={{
+              fontSize: "30px",
+              fontWeight: "700",
+              marginBottom: "8px",
+              color: "#1f2937",
+            }}
+          >
+            Welcome back
+          </h2>
+          <p
+            style={{ fontSize: "16px", marginBottom: "30px", color: "#6b7280" }}
+          >
+            Enter your credentials to access your account
+          </p>
 
-      <button
-        onClick={loginWithEmail}
-        disabled={loading}
-        style={{
-          padding: "10px",
-          borderRadius: "5px",
-          border: "none",
-          backgroundColor: "#4CAF50",
-          color: "#fff",
-          cursor: loading ? "not-allowed" : "pointer",
-        }}
-      >
-        {loading ? "Logging in..." : "Login with Email"}
-      </button>
+          <label
+            htmlFor="email"
+            style={{
+              display: "block",
+              fontSize: "14px",
+              fontWeight: "500",
+              color: "#374151",
+              marginBottom: "4px",
+            }}
+          >
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={styles.input}
+          />
 
-      <button
-        onClick={signInWithGoogle}
-        disabled={loading}
-        style={{
-          padding: "10px",
-          borderRadius: "5px",
-          border: "none",
-          backgroundColor: "#DB4437",
-          color: "#fff",
-          cursor: loading ? "not-allowed" : "pointer",
-        }}
-      >
-        {loading ? "Logging in..." : "Login with Google"}
-      </button>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+            }}
+          >
+            <label
+              htmlFor="password"
+              style={{
+                display: "block",
+                fontSize: "14px",
+                fontWeight: "500",
+                color: "#374151",
+                marginBottom: "4px",
+              }}
+            >
+              Password
+            </label>
+            <Link
+              to="/forgot-password"
+              style={{
+                ...styles.linkText,
+                fontSize: "14px",
+                marginBottom: "4px",
+              }}
+            >
+              Forgot password?
+            </Link>
+          </div>
 
-      <p style={{ marginTop: "10px" }}>
-        Don't have an account? <Link to="/signup">Signup</Link>
-      </p>
+          <div style={{ position: "relative", marginBottom: "20px" }}>
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={styles.input}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              style={styles.passwordToggle}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
+            </button>
+          </div>
+
+          {error && (
+            <p
+              style={{
+                color: "#ef4444",
+                fontSize: "14px",
+                marginBottom: "16px",
+                textAlign: "center",
+              }}
+            >
+              {error}
+            </p>
+          )}
+
+          <button
+            onClick={loginWithEmail}
+            disabled={loading}
+            style={getButtonStyles(styles.primaryButton)}
+          >
+            {loading ? "Signing in..." : "Sign in"}
+          </button>
+
+          <div
+            style={{ display: "flex", alignItems: "center", margin: "16px 0" }}
+          >
+            <div
+              style={{ flexGrow: 1, height: "1px", backgroundColor: "#e5e7eb" }}
+            />
+            <span
+              style={{
+                margin: "0 10px",
+                color: "#9ca3af",
+                fontSize: "12px",
+                textTransform: "uppercase",
+              }}
+            >
+              Or continue with
+            </span>
+            <div
+              style={{ flexGrow: 1, height: "1px", backgroundColor: "#e5e7eb" }}
+            />
+          </div>
+
+          <button
+            onClick={signInWithGoogle}
+            disabled={loading}
+            style={getButtonStyles(styles.googleButton)}
+          >
+            <FcGoogle style={{ fontSize: "20px", marginRight: "8px" }} />
+            Google
+          </button>
+
+          <p
+            style={{
+              marginTop: "30px",
+              textAlign: "center",
+              fontSize: "14px",
+              color: "#6b7280",
+            }}
+          >
+            Don't have an account?{" "}
+            <Link to="/signup" style={styles.linkText}>
+              Sign up
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
