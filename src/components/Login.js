@@ -40,7 +40,7 @@ export default function Login() {
         margin: "50px auto",
       }}
     >
-      <h2>Zyncc</h2>
+      <h2 className="">Zyncc</h2>
 
       <input
         name="email"
