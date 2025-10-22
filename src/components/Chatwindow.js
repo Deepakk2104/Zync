@@ -107,7 +107,7 @@ export default function ChatWindow({ chatId }) {
     await setDoc(typingRef, { [auth.currentUser.uid]: false }, { merge: true });
   };
 
-  // Format last seen like WhatsApp
+  // Format last seen
   const formatLastSeen = (date) => {
     if (!date) return "recently";
 
