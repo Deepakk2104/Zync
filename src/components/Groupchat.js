@@ -11,6 +11,7 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
+import Picker from "emoji-picker-react";
 
 export default function GroupChat({ groupId }) {
   const [messages, setMessages] = useState([]);
@@ -19,12 +20,13 @@ export default function GroupChat({ groupId }) {
   const [users, setUsers] = useState({});
   const [groupInfo, setGroupInfo] = useState(null);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const typingRef = groupId
     ? doc(db, "groups", groupId, "typing", "status")
     : null;
 
-  // Load group info
+  // Group info listener
   useEffect(() => {
     if (!groupId) return;
     const groupRef = doc(db, "groups", groupId);
@@ -34,7 +36,7 @@ export default function GroupChat({ groupId }) {
     return () => unsub();
   }, [groupId]);
 
-  // Listen for typing updates
+  // Typing listener
   useEffect(() => {
     if (!typingRef) return;
     const unsub = onSnapshot(typingRef, (snap) => {
@@ -43,7 +45,7 @@ export default function GroupChat({ groupId }) {
     return () => unsub();
   }, [typingRef]);
 
-  // Listen for group messages
+  // Messages listener
   useEffect(() => {
     if (!groupId || !groupInfo?.members.includes(auth.currentUser.uid)) return;
 
@@ -56,15 +58,11 @@ export default function GroupChat({ groupId }) {
       const msgs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       setMessages(msgs);
 
-      // Mark messages as seen
       msgs.forEach(async (msg) => {
         if (msg.senderId !== auth.currentUser.uid) {
           const msgRef = doc(db, "groups", groupId, "messages", msg.id);
           await updateDoc(msgRef, {
-            seenBy: {
-              ...(msg.seenBy || {}),
-              [auth.currentUser.uid]: true,
-            },
+            seenBy: { ...(msg.seenBy || {}), [auth.currentUser.uid]: true },
           });
         }
       });
@@ -73,7 +71,7 @@ export default function GroupChat({ groupId }) {
     return () => unsub();
   }, [groupId, groupInfo]);
 
-  // Load all users
+  // Users listener
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "users"), (snap) => {
       const data = {};
@@ -83,7 +81,6 @@ export default function GroupChat({ groupId }) {
     return () => unsub();
   }, []);
 
-  // Handle typing
   const handleInputChange = async (e) => {
     setNewMsg(e.target.value);
     if (!typingRef || !auth.currentUser) return;
@@ -94,7 +91,6 @@ export default function GroupChat({ groupId }) {
     );
   };
 
-  // Send message
   const sendMessage = async () => {
     if (
       !newMsg.trim() ||
@@ -111,6 +107,7 @@ export default function GroupChat({ groupId }) {
       seenBy: { [auth.currentUser.uid]: true },
     });
     setNewMsg("");
+    setShowEmojiPicker(false);
 
     if (typingRef) {
       await setDoc(
@@ -119,6 +116,10 @@ export default function GroupChat({ groupId }) {
         { merge: true }
       );
     }
+  };
+
+  const onEmojiClick = (event, emojiObject) => {
+    setNewMsg((prev) => prev + emojiObject.emoji);
   };
 
   const isMember = groupInfo?.members.includes(auth.currentUser.uid);
@@ -197,8 +198,14 @@ export default function GroupChat({ groupId }) {
         </div>
       )}
 
-      {/* Input */}
-      <div className="flex gap-2 p-4 border-t">
+      {/* Input + Emoji */}
+      <div className="flex gap-2 p-4 border-t items-center">
+        <button
+          className="p-2 bg-yellow-400 rounded"
+          onClick={() => setShowEmojiPicker((prev) => !prev)}
+        >
+          😊
+        </button>
         <input
           className="flex-1 p-2 border rounded"
           value={newMsg}
@@ -218,6 +225,13 @@ export default function GroupChat({ groupId }) {
           Send
         </button>
       </div>
+
+      {/* Emoji Picker */}
+      {showEmojiPicker && (
+        <div className="absolute bottom-16 left-4 z-50">
+          <Picker onEmojiClick={onEmojiClick} />
+        </div>
+      )}
 
       {/* Group Info Sidebar */}
       {showSidebar && (
