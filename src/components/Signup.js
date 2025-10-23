@@ -196,7 +196,7 @@ export default function Signup() {
                 marginRight: "10px",
               }}
             />
-            <h1 style={{ fontSize: "24px", fontWeight: "700" }}>zyncc</h1>
+            <h1 style={{ fontSize: "24px", fontWeight: "700" }}>Zyncc</h1>
           </div>
           <p
             style={{
@@ -206,7 +206,7 @@ export default function Signup() {
               margin: "20px 0",
             }}
           >
-            Join zyncc today and start collaborating with your team
+            Join zyncc today and start collaborating with your friends
           </p>
         </div>
 
@@ -214,7 +214,7 @@ export default function Signup() {
 
         <p
           style={{
-            fontSize: "16px",
+            fontSize: "22px",
             fontWeight: "500",
             position: "relative",
             zIndex: 1,

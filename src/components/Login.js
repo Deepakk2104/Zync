@@ -204,7 +204,7 @@ export default function Login() {
                 marginRight: "10px",
               }}
             />
-            <h1 style={{ fontSize: "24px", fontWeight: "700" }}>zyncc</h1>
+            <h1 style={{ fontSize: "24px", fontWeight: "700" }}>Zyncc</h1>
           </div>
           <p
             style={{
@@ -214,7 +214,7 @@ export default function Login() {
               margin: "20px 0",
             }}
           >
-            Connect, chat, and collaborate with your team in real-time
+            Connect, chat, and collaborate with your friends in real-time
           </p>
         </div>
 
@@ -222,7 +222,7 @@ export default function Login() {
 
         <p
           style={{
-            fontSize: "16px",
+            fontSize: "22px",
             fontWeight: "500",
             position: "relative",
             zIndex: 1,
