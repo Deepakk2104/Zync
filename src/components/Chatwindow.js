@@ -6,10 +6,10 @@ import {
   onSnapshot,
   addDoc,
   serverTimestamp,
-  query,
-  orderBy,
   setDoc,
   updateDoc,
+  query,
+  orderBy,
 } from "firebase/firestore";
 import EmojiPicker from "emoji-picker-react";
 
@@ -21,51 +21,58 @@ export default function ChatWindow({ chatId }) {
   const [lastSeen, setLastSeen] = useState(null);
   const [isOnline, setIsOnline] = useState(false);
 
-  const chatDocId = [auth.currentUser.uid, chatId].sort().join("_");
-  const typingRef = doc(db, "chats", chatDocId, "typing", "status");
+  // Store the UID of current user to avoid null after logout
+  const currentUid = auth.currentUser?.uid;
+  const chatDocId = [currentUid, chatId].sort().join("_");
+  const typingRef = currentUid
+    ? doc(db, "chats", chatDocId, "typing", "status")
+    : null;
 
-  // Manage own online/offline status of user
+  // 🔹 Online status
   useEffect(() => {
-    setUserOnlineStatus(auth.currentUser.uid, true);
-    return () => setUserOnlineStatus(auth.currentUser.uid, false);
-  }, []);
+    if (!currentUid) return;
+    setUserOnlineStatus(currentUid, true);
+    return () => {
+      setUserOnlineStatus(currentUid, false);
+    };
+  }, [currentUid]);
 
-  // Listen for messages
+  // 🔹 Listen messages
   useEffect(() => {
+    if (!chatId || !currentUid) return;
     const q = query(
       collection(db, "chats", chatDocId, "messages"),
       orderBy("timestamp", "asc")
     );
-    const unsub = onSnapshot(q, async (snap) => {
+    const unsub = onSnapshot(q, (snap) => {
       const msgs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       setMessages(msgs);
 
-      // Mark peer's messages as seen
+      // mark peer's messages as seen
       msgs.forEach(async (msg) => {
         if (msg.senderId === chatId && !msg.seen) {
-          const msgRef = doc(db, "chats", chatDocId, "messages", msg.id);
-          await updateDoc(msgRef, { seen: true });
+          await updateDoc(doc(db, "chats", chatDocId, "messages", msg.id), {
+            seen: true,
+          });
         }
       });
     });
     return () => unsub();
-  }, [chatDocId, chatId]);
+  }, [chatId, chatDocId, currentUid]);
 
-  // Listen for typing status
+  // 🔹 Listen typing
   useEffect(() => {
+    if (!typingRef || !chatId) return;
     const unsub = onSnapshot(typingRef, (snap) => {
-      if (snap.exists()) {
-        const typingData = snap.data();
-        setPeerTyping(typingData[chatId] || false);
-      }
+      if (snap.exists()) setPeerTyping(snap.data()[chatId] || false);
     });
     return () => unsub();
   }, [chatId, typingRef]);
 
-  // Listen for peer status (online + last seen)
+  // 🔹 Listen peer status
   useEffect(() => {
-    const peerRef = doc(db, "users", chatId);
-    const unsub = onSnapshot(peerRef, (snap) => {
+    if (!chatId) return;
+    const unsub = onSnapshot(doc(db, "users", chatId), (snap) => {
       if (snap.exists()) {
         const data = snap.data();
         setIsOnline(data.online || false);
@@ -75,149 +82,119 @@ export default function ChatWindow({ chatId }) {
     return () => unsub();
   }, [chatId]);
 
-  // Handle input typing
+  // 🔹 Handle input
   const handleInputChange = async (e) => {
     const value = e.target.value;
     setNewMsg(value);
-
+    if (!typingRef || !currentUid) return;
     await setDoc(
       typingRef,
-      { [auth.currentUser.uid]: value.length > 0 },
+      { [currentUid]: value.length > 0 },
       { merge: true }
     );
   };
 
-  // Handle emoji select
+  // 🔹 Send message
+  const sendMessage = async () => {
+    if (!newMsg.trim() || !currentUid || !chatId) return;
+
+    await addDoc(collection(db, "chats", chatDocId, "messages"), {
+      text: newMsg,
+      senderId: currentUid,
+      timestamp: serverTimestamp(),
+      seen: false,
+    });
+
+    setNewMsg("");
+    if (typingRef) {
+      await setDoc(typingRef, { [currentUid]: false }, { merge: true });
+    }
+  };
+
   const handleEmojiClick = (emojiObject) => {
     setNewMsg((prev) => prev + emojiObject.emoji);
   };
 
-  // Send message
-  const sendMessage = async () => {
-    if (!newMsg.trim()) return;
-
-    await addDoc(collection(db, "chats", chatDocId, "messages"), {
-      text: newMsg,
-      senderId: auth.currentUser.uid,
-      timestamp: serverTimestamp(),
-      seen: false, // by default
-    });
-
-    setNewMsg("");
-    await setDoc(typingRef, { [auth.currentUser.uid]: false }, { merge: true });
-  };
-
-  // Format last seen
   const formatLastSeen = (date) => {
     if (!date) return "recently";
-
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
-
     const yesterday = new Date();
     yesterday.setDate(now.getDate() - 1);
     const isYesterday = date.toDateString() === yesterday.toDateString();
 
-    if (isToday) {
+    if (isToday)
       return `Today at ${date.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       })}`;
-    } else if (isYesterday) {
+    if (isYesterday)
       return `Yesterday at ${date.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       })}`;
-    } else {
-      return `${date.toLocaleDateString([], {
-        day: "numeric",
-        month: "short",
-      })} at ${date.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}`;
-    }
-  };
-
-  // Get read receipt status
-  const getReadReceipt = (msg) => {
-    if (msg.senderId !== auth.currentUser.uid) return null;
-
-    if (!msg.seen) {
-      return "✓"; // single
-    } else {
-      return "✓✓"; // double tick
-    }
+    return `${date.toLocaleDateString([], {
+      day: "numeric",
+      month: "short",
+    })} at ${date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
   };
 
   return (
-    <div className="flex-1 flex flex-col p-4">
-      {/* Header with online/last seen */}
-      <div className="mb-2 text-sm text-gray-400">
-        {isOnline ? "Online" : `Last seen: ${formatLastSeen(lastSeen)}`}
+    <div className="flex-1 flex flex-col bg-purple-50 relative">
+      {/* Header */}
+      <div className="px-4 py-3 bg-purple-600 text-white flex justify-between items-center shadow">
+        <h2 className="font-bold">{chatId}</h2>
+        <span className="text-sm">
+          {isOnline ? "Online" : `Last seen: ${formatLastSeen(lastSeen)}`}
+        </span>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto mb-2">
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {messages.map((msg) => {
-          const msgTime = msg.timestamp?.toDate
-            ? msg.timestamp.toDate().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            : "";
-
-          const receipt = getReadReceipt(msg);
-
+          const isOwn = msg.senderId === currentUid;
           return (
             <div
               key={msg.id}
-              className={`mb-2 ${
-                msg.senderId === auth.currentUser.uid
-                  ? "text-right"
-                  : "text-left"
-              }`}
+              className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
             >
-              <div className="inline-block px-2 py-1 rounded bg-gray-700 text-white relative">
-                {msg.text}
-                <div className="text-xs text-gray-300 mt-1 flex items-center justify-end gap-1">
-                  {msgTime}{" "}
-                  {receipt && (
-                    <span
-                      className={
-                        msg.seen ? "text-blue-400 font-bold" : "text-gray-400"
-                      }
-                    >
-                      {receipt}
-                    </span>
-                  )}
+              <div className="max-w-xs">
+                <div
+                  className={`inline-block px-3 py-2 rounded-lg ${
+                    isOwn
+                      ? "bg-purple-700 text-white"
+                      : "bg-white text-purple-900 shadow"
+                  }`}
+                >
+                  {msg.text}
                 </div>
+                {isOwn && (
+                  <div className="text-xs text-gray-400 mt-1 text-right">
+                    {msg.seen ? "✓✓" : "✓"}
+                  </div>
+                )}
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Typing indicator  */}
+      {/* Typing */}
       {peerTyping && (
-        <div className="text-gray-400 text-sm mb-1">Typing...</div>
+        <div className="text-purple-700 text-sm px-4 mb-1">Typing...</div>
       )}
 
-      {/* Input + Emoji Picker */}
-      <div className="flex items-center gap-2 relative">
+      {/* Input */}
+      <div className="flex items-center gap-2 p-4 border-t bg-white">
         <button
-          className="p-2 bg-gray-200 rounded"
+          className="p-2 bg-purple-300 rounded"
           onClick={() => setShowEmojiPicker((prev) => !prev)}
         >
           😊
         </button>
-
-        {showEmojiPicker && (
-          <div className="absolute bottom-12 left-0 z-50">
-            <EmojiPicker onEmojiClick={handleEmojiClick} />
-          </div>
-        )}
-
         <input
           className="flex-1 p-2 border rounded"
           value={newMsg}
@@ -225,12 +202,19 @@ export default function ChatWindow({ chatId }) {
           placeholder="Type a message..."
         />
         <button
-          className="p-2 bg-blue-500 text-white rounded"
+          className="p-2 bg-purple-600 text-white rounded"
           onClick={sendMessage}
         >
           Send
         </button>
       </div>
+
+      {/* Emoji picker */}
+      {showEmojiPicker && (
+        <div className="absolute bottom-20 left-4 z-50">
+          <EmojiPicker onEmojiClick={handleEmojiClick} />
+        </div>
+      )}
     </div>
   );
 }
