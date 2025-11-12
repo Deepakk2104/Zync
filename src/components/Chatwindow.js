@@ -29,19 +29,19 @@ export default function ChatWindow({ chatId }) {
     ? doc(db, "chats", chatDocId, "typing", "status")
     : null;
 
-  // 🔹 Auto-scroll to latest message
+  // 🔹 Auto scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 🔹 Online status
+  // 🔹 Set user online status
   useEffect(() => {
     if (!currentUid) return;
     setUserOnlineStatus(currentUid, true);
     return () => setUserOnlineStatus(currentUid, false);
   }, [currentUid]);
 
-  // 🔹 Fetch peer info (name + avatar)
+  // 🔹 Listen to peer info (avatar, name, status)
   useEffect(() => {
     if (!chatId) return;
     const unsub = onSnapshot(doc(db, "users", chatId), (snap) => {
@@ -55,7 +55,7 @@ export default function ChatWindow({ chatId }) {
     return () => unsub();
   }, [chatId]);
 
-  // 🔹 Listen messages
+  // 🔹 Listen to messages
   useEffect(() => {
     if (!chatId || !currentUid) return;
     const q = query(
@@ -66,7 +66,7 @@ export default function ChatWindow({ chatId }) {
       const msgs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       setMessages(msgs);
 
-      // mark peer's messages as seen
+      // mark seen for peer messages
       msgs.forEach(async (msg) => {
         if (msg.senderId === chatId && !msg.seen) {
           await updateDoc(doc(db, "chats", chatDocId, "messages", msg.id), {
@@ -78,7 +78,7 @@ export default function ChatWindow({ chatId }) {
     return () => unsub();
   }, [chatId, chatDocId, currentUid]);
 
-  // 🔹 Listen typing
+  // 🔹 Typing indicator
   useEffect(() => {
     if (!typingRef || !chatId) return;
     const unsub = onSnapshot(typingRef, (snap) => {
@@ -87,7 +87,7 @@ export default function ChatWindow({ chatId }) {
     return () => unsub();
   }, [chatId, typingRef]);
 
-  // 🔹 Handle input
+  // 🔹 Input change handler
   const handleInputChange = async (e) => {
     const value = e.target.value;
     setNewMsg(value);
@@ -114,7 +114,7 @@ export default function ChatWindow({ chatId }) {
     }
   };
 
-  // 🔹 Send with Enter key
+  // 🔹 Enter key to send
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -122,11 +122,13 @@ export default function ChatWindow({ chatId }) {
     }
   };
 
+  // 🔹 Emoji picker
   const handleEmojiClick = (emojiObject) => {
     setNewMsg((prev) => prev + emojiObject.emoji);
-    setShowEmojiPicker(false); // auto-close picker
+    setShowEmojiPicker(false);
   };
 
+  // 🔹 Format last seen
   const formatLastSeen = (date) => {
     if (!date) return "recently";
     const now = new Date();
@@ -155,9 +157,26 @@ export default function ChatWindow({ chatId }) {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-purple-50 relative">
+    <div
+      className="flex-1 flex flex-col relative"
+      style={{
+        backgroundColor: "#f8f6fc",
+        fontFamily: "Inter, sans-serif",
+      }}
+    >
       {/* Header */}
-      <div className="px-4 py-3 bg-purple-600 text-white flex justify-between items-center shadow">
+      <div
+        style={{
+          background:
+            "linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #d946ef 100%)",
+          color: "white",
+          padding: "14px 18px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+        }}
+      >
         <div className="flex items-center gap-3">
           <img
             src={
@@ -165,13 +184,13 @@ export default function ChatWindow({ chatId }) {
               "https://cdn-icons-png.flaticon.com/512/149/149071.png"
             }
             alt="avatar"
-            className="w-10 h-10 rounded-full border border-purple-300"
+            className="w-10 h-10 rounded-full border border-white/30"
           />
           <div>
-            <h2 className="font-semibold">
+            <h2 className="font-semibold text-white">
               {peerInfo?.name || peerInfo?.email || chatId}
             </h2>
-            <span className="text-xs text-gray-200">
+            <span className="text-xs text-purple-100">
               {isOnline ? "Online" : `Last seen: ${formatLastSeen(lastSeen)}`}
             </span>
           </div>
@@ -179,29 +198,28 @@ export default function ChatWindow({ chatId }) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 transition-all">
+      <div className="flex-1 overflow-y-auto p-5 space-y-3">
         {messages.map((msg) => {
           const isOwn = msg.senderId === currentUid;
           return (
             <div
               key={msg.id}
-              className={`flex transition-all duration-300 ${
-                isOwn ? "justify-end" : "justify-start"
-              }`}
+              className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
             >
-              <div className="max-w-xs animate-fade-in">
+              <div className="max-w-xs">
                 <div
-                  className={`inline-block px-3 py-2 rounded-2xl ${
+                  className={`px-4 py-2 rounded-2xl shadow-sm ${
                     isOwn
-                      ? "bg-purple-700 text-white"
-                      : "bg-white text-purple-900 shadow"
+                      ? "bg-gradient-to-r from-purple-600 to-purple-500 text-white"
+                      : "bg-white text-gray-800 border border-purple-100"
                   }`}
+                  style={{ wordBreak: "break-word" }}
                 >
                   {msg.text}
                 </div>
                 <div
                   className={`text-xs mt-1 ${
-                    isOwn ? "text-right text-gray-300" : "text-gray-400"
+                    isOwn ? "text-right text-gray-400" : "text-gray-500"
                   }`}
                 >
                   {msg.timestamp?.toDate
@@ -218,9 +236,9 @@ export default function ChatWindow({ chatId }) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Typing */}
+      {/* Typing Indicator */}
       {peerTyping && (
-        <div className="text-purple-700 text-sm px-4 mb-1 italic">
+        <div className="text-purple-600 text-sm px-4 mb-1 italic">
           Typing...
         </div>
       )}
@@ -228,27 +246,32 @@ export default function ChatWindow({ chatId }) {
       {/* Input */}
       <div className="flex items-center gap-2 p-4 border-t bg-white">
         <button
-          className="p-2 bg-purple-200 rounded hover:bg-purple-300 transition"
           onClick={() => setShowEmojiPicker((prev) => !prev)}
+          className="p-2 rounded-lg border border-purple-200 hover:bg-purple-50 transition"
         >
           😊
         </button>
         <input
-          className="flex-1 p-2 border rounded focus:ring-2 focus:ring-purple-400 outline-none"
+          className="flex-1 p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 outline-none text-gray-700"
           value={newMsg}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
+          style={{ backgroundColor: "#f9fafb" }}
         />
         <button
-          className="p-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
           onClick={sendMessage}
+          className="px-4 py-2 rounded-lg text-white font-medium shadow-sm transition"
+          style={{
+            background:
+              "linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #d946ef 100%)",
+          }}
         >
           Send
         </button>
       </div>
 
-      {/* Emoji picker */}
+      {/* Emoji Picker */}
       {showEmojiPicker && (
         <div className="absolute bottom-20 left-4 z-50 shadow-lg">
           <EmojiPicker onEmojiClick={handleEmojiClick} />

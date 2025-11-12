@@ -26,7 +26,7 @@ export default function GroupChat({ groupId }) {
     ? doc(db, "groups", groupId, "typing", "status")
     : null;
 
-  // 🔹 Auto-scroll to latest message
+  // 🔹 Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -73,7 +73,7 @@ export default function GroupChat({ groupId }) {
     return () => unsub();
   }, [groupId, groupInfo]);
 
-  // 🔹 Listen for typing status
+  // 🔹 Typing status
   useEffect(() => {
     if (!typingRef) return;
     const unsub = onSnapshot(typingRef, (snap) => {
@@ -120,7 +120,7 @@ export default function GroupChat({ groupId }) {
       );
   };
 
-  // 🔹 Handle Enter key
+  // 🔹 Handle Enter
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -136,13 +136,32 @@ export default function GroupChat({ groupId }) {
   const isMember = groupInfo?.members.includes(auth.currentUser.uid);
 
   return (
-    <div className="flex-1 flex flex-col bg-purple-50 relative">
+    <div
+      className="flex-1 flex flex-col relative"
+      style={{
+        backgroundColor: "#f8f6fc",
+        fontFamily: "Inter, sans-serif",
+      }}
+    >
       {/* Header */}
       {groupInfo && (
-        <div className="px-4 py-3 bg-purple-600 text-white flex justify-between items-center shadow">
+        <div
+          style={{
+            background:
+              "linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #d946ef 100%)",
+            color: "white",
+            padding: "14px 18px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+          }}
+        >
           <div>
-            <h2 className="font-bold text-lg">{groupInfo.name}</h2>
-            <p className="text-xs text-gray-200">
+            <h2 className="font-semibold text-lg text-white">
+              {groupInfo.name}
+            </h2>
+            <p className="text-xs text-purple-100">
               {groupInfo.members.length} members
             </p>
           </div>
@@ -150,7 +169,7 @@ export default function GroupChat({ groupId }) {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto p-5 space-y-3">
         {messages.map((msg) => {
           const user = users[msg.senderId] || {};
           const isOwn = msg.senderId === auth.currentUser.uid;
@@ -164,11 +183,9 @@ export default function GroupChat({ groupId }) {
           return (
             <div
               key={msg.id}
-              className={`flex transition-all duration-300 ${
-                isOwn ? "justify-end" : "justify-start"
-              }`}
+              className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
             >
-              <div className="max-w-xs animate-fade-in">
+              <div className="max-w-xs">
                 {!isOwn && (
                   <div className="flex items-center gap-2 mb-1">
                     <img
@@ -177,25 +194,28 @@ export default function GroupChat({ groupId }) {
                         "https://cdn-icons-png.flaticon.com/512/149/149071.png"
                       }
                       alt="avatar"
-                      className="w-6 h-6 rounded-full"
+                      className="w-6 h-6 rounded-full border border-purple-200"
                     />
                     <span className="text-xs text-purple-800 font-medium">
                       {user.name || user.email}
                     </span>
                   </div>
                 )}
+
                 <div
-                  className={`inline-block px-3 py-2 rounded-2xl ${
+                  className={`px-4 py-2 rounded-2xl shadow-sm ${
                     isOwn
-                      ? "bg-purple-700 text-white"
-                      : "bg-white text-purple-900 shadow"
+                      ? "bg-gradient-to-r from-purple-600 to-purple-500 text-white"
+                      : "bg-white text-gray-800 border border-purple-100"
                   }`}
+                  style={{ wordBreak: "break-word" }}
                 >
                   {msg.text}
                 </div>
+
                 <div
                   className={`text-xs mt-1 ${
-                    isOwn ? "text-right text-gray-300" : "text-gray-500"
+                    isOwn ? "text-right text-gray-400" : "text-gray-500"
                   }`}
                 >
                   {timestamp}{" "}
@@ -211,7 +231,7 @@ export default function GroupChat({ groupId }) {
 
       {/* Typing */}
       {isMember && (
-        <div className="text-purple-700 text-sm mb-1 px-4 italic">
+        <div className="text-purple-600 text-sm px-4 mb-1 italic">
           {Object.entries(peerTyping || {})
             .filter(([uid, val]) => val && uid !== auth.currentUser.uid)
             .map(([uid]) => (
@@ -226,21 +246,26 @@ export default function GroupChat({ groupId }) {
       {isMember ? (
         <div className="flex items-center gap-2 p-4 border-t bg-white">
           <button
-            className="p-2 bg-purple-200 rounded hover:bg-purple-300 transition"
             onClick={() => setShowEmojiPicker((prev) => !prev)}
+            className="p-2 rounded-lg border border-purple-200 hover:bg-purple-50 transition"
           >
             😊
           </button>
           <input
-            className="flex-1 p-2 border rounded focus:ring-2 focus:ring-purple-400 outline-none"
+            className="flex-1 p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 outline-none text-gray-700"
             value={newMsg}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
+            style={{ backgroundColor: "#f9fafb" }}
           />
           <button
-            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
             onClick={sendMessage}
+            className="px-4 py-2 rounded-lg text-white font-medium shadow-sm transition"
+            style={{
+              background:
+                "linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #d946ef 100%)",
+            }}
           >
             Send
           </button>
@@ -251,7 +276,7 @@ export default function GroupChat({ groupId }) {
         </div>
       )}
 
-      {/* Emoji picker */}
+      {/* Emoji Picker */}
       {showEmojiPicker && (
         <div className="absolute bottom-20 left-4 z-50 shadow-lg">
           <EmojiPicker onEmojiClick={handleEmojiClick} />
