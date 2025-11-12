@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { db, auth, setUserOnlineStatus } from "../firebase";
 import {
   collection,
@@ -20,22 +20,40 @@ export default function ChatWindow({ chatId }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [lastSeen, setLastSeen] = useState(null);
   const [isOnline, setIsOnline] = useState(false);
+  const [peerInfo, setPeerInfo] = useState(null);
+  const messagesEndRef = useRef(null);
 
-  // Store the UID of current user to avoid null after logout
   const currentUid = auth.currentUser?.uid;
   const chatDocId = [currentUid, chatId].sort().join("_");
   const typingRef = currentUid
     ? doc(db, "chats", chatDocId, "typing", "status")
     : null;
 
+  // 🔹 Auto-scroll to latest message
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   // 🔹 Online status
   useEffect(() => {
     if (!currentUid) return;
     setUserOnlineStatus(currentUid, true);
-    return () => {
-      setUserOnlineStatus(currentUid, false);
-    };
+    return () => setUserOnlineStatus(currentUid, false);
   }, [currentUid]);
+
+  // 🔹 Fetch peer info (name + avatar)
+  useEffect(() => {
+    if (!chatId) return;
+    const unsub = onSnapshot(doc(db, "users", chatId), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setPeerInfo(data);
+        setIsOnline(data.online || false);
+        setLastSeen(data.lastSeen?.toDate() || null);
+      }
+    });
+    return () => unsub();
+  }, [chatId]);
 
   // 🔹 Listen messages
   useEffect(() => {
@@ -69,19 +87,6 @@ export default function ChatWindow({ chatId }) {
     return () => unsub();
   }, [chatId, typingRef]);
 
-  // 🔹 Listen peer status
-  useEffect(() => {
-    if (!chatId) return;
-    const unsub = onSnapshot(doc(db, "users", chatId), (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        setIsOnline(data.online || false);
-        setLastSeen(data.lastSeen?.toDate() || null);
-      }
-    });
-    return () => unsub();
-  }, [chatId]);
-
   // 🔹 Handle input
   const handleInputChange = async (e) => {
     const value = e.target.value;
@@ -97,22 +102,29 @@ export default function ChatWindow({ chatId }) {
   // 🔹 Send message
   const sendMessage = async () => {
     if (!newMsg.trim() || !currentUid || !chatId) return;
-
     await addDoc(collection(db, "chats", chatDocId, "messages"), {
       text: newMsg,
       senderId: currentUid,
       timestamp: serverTimestamp(),
       seen: false,
     });
-
     setNewMsg("");
     if (typingRef) {
       await setDoc(typingRef, { [currentUid]: false }, { merge: true });
     }
   };
 
+  // 🔹 Send with Enter key
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
   const handleEmojiClick = (emojiObject) => {
     setNewMsg((prev) => prev + emojiObject.emoji);
+    setShowEmojiPicker(false); // auto-close picker
   };
 
   const formatLastSeen = (date) => {
@@ -146,24 +158,40 @@ export default function ChatWindow({ chatId }) {
     <div className="flex-1 flex flex-col bg-purple-50 relative">
       {/* Header */}
       <div className="px-4 py-3 bg-purple-600 text-white flex justify-between items-center shadow">
-        <h2 className="font-bold">{chatId}</h2>
-        <span className="text-sm">
-          {isOnline ? "Online" : `Last seen: ${formatLastSeen(lastSeen)}`}
-        </span>
+        <div className="flex items-center gap-3">
+          <img
+            src={
+              peerInfo?.photoURL ||
+              "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+            }
+            alt="avatar"
+            className="w-10 h-10 rounded-full border border-purple-300"
+          />
+          <div>
+            <h2 className="font-semibold">
+              {peerInfo?.name || peerInfo?.email || chatId}
+            </h2>
+            <span className="text-xs text-gray-200">
+              {isOnline ? "Online" : `Last seen: ${formatLastSeen(lastSeen)}`}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 transition-all">
         {messages.map((msg) => {
           const isOwn = msg.senderId === currentUid;
           return (
             <div
               key={msg.id}
-              className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
+              className={`flex transition-all duration-300 ${
+                isOwn ? "justify-end" : "justify-start"
+              }`}
             >
-              <div className="max-w-xs">
+              <div className="max-w-xs animate-fade-in">
                 <div
-                  className={`inline-block px-3 py-2 rounded-lg ${
+                  className={`inline-block px-3 py-2 rounded-2xl ${
                     isOwn
                       ? "bg-purple-700 text-white"
                       : "bg-white text-purple-900 shadow"
@@ -171,38 +199,49 @@ export default function ChatWindow({ chatId }) {
                 >
                   {msg.text}
                 </div>
-                {isOwn && (
-                  <div className="text-xs text-gray-400 mt-1 text-right">
-                    {msg.seen ? "✓✓" : "✓"}
-                  </div>
-                )}
+                <div
+                  className={`text-xs mt-1 ${
+                    isOwn ? "text-right text-gray-300" : "text-gray-400"
+                  }`}
+                >
+                  {msg.timestamp?.toDate
+                    ? msg.timestamp.toDate().toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : ""}
+                </div>
               </div>
             </div>
           );
         })}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Typing */}
       {peerTyping && (
-        <div className="text-purple-700 text-sm px-4 mb-1">Typing...</div>
+        <div className="text-purple-700 text-sm px-4 mb-1 italic">
+          Typing...
+        </div>
       )}
 
       {/* Input */}
       <div className="flex items-center gap-2 p-4 border-t bg-white">
         <button
-          className="p-2 bg-purple-300 rounded"
+          className="p-2 bg-purple-200 rounded hover:bg-purple-300 transition"
           onClick={() => setShowEmojiPicker((prev) => !prev)}
         >
           😊
         </button>
         <input
-          className="flex-1 p-2 border rounded"
+          className="flex-1 p-2 border rounded focus:ring-2 focus:ring-purple-400 outline-none"
           value={newMsg}
           onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
           placeholder="Type a message..."
         />
         <button
-          className="p-2 bg-purple-600 text-white rounded"
+          className="p-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
           onClick={sendMessage}
         >
           Send
@@ -211,7 +250,7 @@ export default function ChatWindow({ chatId }) {
 
       {/* Emoji picker */}
       {showEmojiPicker && (
-        <div className="absolute bottom-20 left-4 z-50">
+        <div className="absolute bottom-20 left-4 z-50 shadow-lg">
           <EmojiPicker onEmojiClick={handleEmojiClick} />
         </div>
       )}
