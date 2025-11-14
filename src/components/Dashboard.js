@@ -49,7 +49,7 @@ export default function Dashboard() {
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 bg-purple-600 text-white shadow">
-          <h1 className="text-xl font-bold">Zync Chat</h1>
+          <h1 className="text-xl font-bold">Zyncc Chat</h1>
           <button
             onClick={handleLogout}
             className="px-3 py-1 bg-red-500 rounded hover:bg-red-600 transition"
