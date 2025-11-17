@@ -27,7 +27,7 @@ You can directly log in using the following test credentials:
 - **Email:** `testuser@gmail.com`  
 - **Password:** `12345678`
 
-> Or sign up with your own email or Google account.
+- Or sign up with your own email or Google account.
 
 ---
 
@@ -86,7 +86,7 @@ You can directly log in using the following test credentials:
 ### **1. Clone the repo**
 
 ```bash
-git clone https://github.com/<your-username>/zyncc-chat-app.git
+git clone https://github.com/Deepakk2104/Zync.git
 cd zyncc-chat-app
 ```
 
