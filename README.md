@@ -13,7 +13,7 @@ Designed to provide a fast and smooth messaging experience — with live indicat
 | **Backend / Database** | Firebase (Auth, Firestore)       |
 | **UI / Styling**       | Tailwind CSS                     |
 | **Real-Time Updates**  | Firestore Subscriptions          |
-| **Deployment**         | Vercel / Firebase Hosting        |
+| **Deployment**         | Vercel                           |
 | **Emoji Support**      | Emoji Picker React               |
 
 ---
