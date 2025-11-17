@@ -51,8 +51,7 @@ You can directly log in using the following test credentials:
 
 ## **Live Demo**
 
-🚀 _Coming Soon..._  
-(_Will update once deployed_)
+## **Website:** https://zync-chi.vercel.app/login
 
 ---
 
@@ -89,25 +88,25 @@ You can directly log in using the following test credentials:
 ```bash
 git clone https://github.com/<your-username>/zyncc-chat-app.git
 cd zyncc-chat-app
-2. Install dependencies
-bash
-Copy code
-npm install
-3. Add Firebase Config
-Create a .env file and add the following:
+```
 
-makefile
-Copy code
-VITE_FIREBASE_API_KEY=your_api_key_here
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-...
-4. Start development server
-bash
-Copy code
-npm run dev
-Project Structure
-arduino
-Copy code
+### **2. Install dependencies**
+
+```bash
+npm install
+```
+
+### **3. Start development server**
+
+```bash
+npm start
+```
+
+---
+
+## **Project Structure**
+
+```
 zyncc-chat-app/
 │
 ├── src/
@@ -122,30 +121,33 @@ zyncc-chat-app/
 ├── package.json
 ├── vite.config.js
 └── README.md
-Build for Production
-bash
-Copy code
+```
+## **Build for Production**
+
+```bash
 npm run build
-Deploy the dist/ folder to platforms like:
+```
+Deploy the `dist/` folder using:
 
-Vercel (recommended)
+- Vercel
+- Firebase Hosting
+- Netlify
 
-Firebase Hosting
+---
 
-Netlify
+## **Contributing**
 
-Contributing
 Contributions are welcome.
 
-Fork the repo
+1. Fork the project
+2. Create your feature branch
+3. Commit changes
+4. Open a Pull Request
 
-Create a new branch (git checkout -b feature-xyz)
+---
 
-Commit your changes
 
-Push to the branch and open a Pull Request
-
-Upcoming Features
+## **Upcoming Features**
 🖼️ Media sharing (Images / Files)
 
 🎤 Voice messages
@@ -160,9 +162,12 @@ Upcoming Features
 
 🔒 End-to-end encryption (future scope)
 
-License
-Licensed under the MIT License.
+## **License**
 
-Author
-Developed by YourName
-Feel free to reach out and connect!
+Licensed under the **MIT License**.
+
+---
+
+## **Author**
+
+**Developed by [Deepakk2104](https://github.com/Deepakk2104)**
