@@ -147,8 +147,7 @@ export default function GroupChat({ groupId }) {
       {groupInfo && (
         <div
           style={{
-            background:
-              "linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #d946ef 100%)",
+            background: "#7835e7",
             color: "white",
             padding: "14px 18px",
             display: "flex",

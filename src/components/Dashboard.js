@@ -48,7 +48,10 @@ export default function Dashboard() {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 bg-purple-600 text-white shadow">
+        <div
+          className="flex justify-between items-center px-6 py-4  text-white shadow"
+          style={{ backgroundColor: "#7b39ec" }}
+        >
           <h1 className="text-xl font-bold">Zyncc Chat</h1>
           <button
             onClick={handleLogout}
